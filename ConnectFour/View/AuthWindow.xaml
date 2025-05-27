@@ -1,0 +1,27 @@
+﻿<Window x:Class="ConnectFour.View.AuthWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:localVM="clr-namespace:ConnectFour.ViewModel"
+        mc:Ignorable="d"
+        Title="Аутентификация" Height="250" Width="300"
+        WindowStartupLocation="CenterScreen">
+    <Window.DataContext>
+        <localVM:AuthViewModel/>
+    </Window.DataContext>
+    <StackPanel Margin="15">
+        <TextBlock Text="Логин:" />
+        <TextBox Text="{Binding Username, UpdateSourceTrigger=PropertyChanged}" Margin="0,0,0,10"/>
+
+        <TextBlock Text="Пароль:" />
+        <!-- PasswordBox не поддерживает прямое связывание с Password свойством из соображений безопасности -->
+        <!-- Мы будем передавать его через CommandParameter или использовать хелпер -->
+        <PasswordBox Name="PasswordBoxAuth" Margin="0,0,0,10"/>
+
+        <Button Content="Войти" Command="{Binding LoginCommand}" CommandParameter="{Binding ElementName=PasswordBoxAuth}" Margin="0,5"/>
+        <Button Content="Зарегистрироваться" Command="{Binding RegisterCommand}" CommandParameter="{Binding ElementName=PasswordBoxAuth}" Margin="0,5"/>
+
+        <TextBlock Text="{Binding Message}" Foreground="Red" TextWrapping="Wrap" Margin="0,10,0,0"/>
+    </StackPanel>
+</Window>

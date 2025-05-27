@@ -1,34 +1,39 @@
 ﻿using System;
 using System.Windows.Input;
 
-namespace ConnectFour
+namespace ConnectFour // Убедись, что пространство имен правильное
 {
-    class RelayCommand : ICommand
+    public class RelayCommand : ICommand
     {
-         private Action<object> execute;
-         private Func<object, bool> canExecute;
+        private readonly Action<object> _execute; // принято использовать _ для приватных полей
+        private readonly Func<object, bool> _canExecute;
 
-         public event EventHandler CanExecuteChanged
-            {
-                add { CommandManager.RequerySuggested += value; }
-                remove { CommandManager.RequerySuggested -= value; }
-            }
+        public event EventHandler CanExecuteChanged
+        {
+            add { CommandManager.RequerySuggested += value; }
+            remove { CommandManager.RequerySuggested -= value; }
+        }
 
-         public RelayCommand(Action<object> execute, Func<object, bool> canExecute = null)
-            {
-                this.execute = execute;
-                this.canExecute = canExecute;
-            }
+        public RelayCommand(Action<object> execute, Func<object, bool> canExecute = null)
+        {
+            _execute = execute ?? throw new ArgumentNullException(nameof(execute));
+            _canExecute = canExecute;
+        }
 
-         public bool CanExecute(object parameter)
-            {
-                return this.canExecute == null || this.canExecute(parameter);
-            }
+        public bool CanExecute(object parameter)
+        {
+            return _canExecute == null || _canExecute(parameter);
+        }
 
-         public void Execute(object parameter)
-         {
-             this.execute(parameter);
-         }
-       }
+        public void Execute(object parameter)
+        {
+            _execute(parameter);
+        }
+
+        // Этот метод вызывается из ViewModel для обновления состояния команды
+        public void RaiseCanExecuteChanged()
+        {
+            CommandManager.InvalidateRequerySuggested();
+        }
     }
-
+}
