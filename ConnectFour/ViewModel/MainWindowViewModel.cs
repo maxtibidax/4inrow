@@ -37,10 +37,6 @@ namespace ConnectFour.ViewModel
         public ICommand Column7PinAddClick { get; set; }
         public ICommand ResetButtonClick { get; set; } // Кнопка "New Game"
 
-        // Game и Mapper остаются для внутренней логики
-        // public Game Game { get => _game; set => _game = value; } // Можно сделать приватным, если не нужен снаружи
-        // public GameBoardMapper Mapper { get => _mapper; set => _mapper = value; }
-
         public string[] MappedLocs
         {
             get => mappedLocs;
@@ -97,10 +93,31 @@ namespace ConnectFour.ViewModel
 
         private bool CanMakeMove(object parameter)
         {
-            // Можно делать ход, если игра не завершена (нет победителя)
-            return _game.WinnerId == 0;
+            // Проверяем не только окончание игры, но и полность конкретной колонки
+            if (_game.WinnerId != 0) return false;
+
+            // Получаем номер колонки из команды
+            int column = GetColumnFromCommand(parameter);
+            if (column == -1) return false;
+
+            return !_game.FullColumns.Contains(column);
         }
 
+        private int GetColumnFromCommand(object parameter)
+        {
+            // Определяем номер колонки по команде
+            if (parameter is ICommand command)
+            {
+                if (command == Column1PinAddClick) return 0;
+                if (command == Column2PinAddClick) return 1;
+                if (command == Column3PinAddClick) return 2;
+                if (command == Column4PinAddClick) return 3;
+                if (command == Column5PinAddClick) return 4;
+                if (command == Column6PinAddClick) return 5;
+                if (command == Column7PinAddClick) return 6;
+            }
+            return -1;
+        }
 
         private void LoadGameOrCreateNew()
         {
@@ -137,6 +154,7 @@ namespace ConnectFour.ViewModel
         public void ResetGameClick(object o)
         {
             _game.Reset(); // Сбрасывает доску, текущего игрока, но не общий счет
+            _mapper.Reset(); // ВАЖНО: сбрасываем также состояние маппера!
             NotifiedWinner = 0;
             RefreshGameBoardDisplay();
             SaveCurrentGameData(); // Сохраняем состояние (пустая доска, тот же счет)
@@ -169,14 +187,22 @@ namespace ConnectFour.ViewModel
 
         private async void ProcessGameUpdate()
         {
-            bool gameWasOver = _game.WinnerId != 0; // Запоминаем, была ли игра завершена ДО этого хода
-
-            if (_game.WinnerChanged && !gameWasOver) // Если победитель определился ТОЛЬКО ЧТО
+            // ИСПРАВЛЕНИЕ: проверяем WinnerChanged сразу после AddPin
+            if (_game.WinnerChanged && _game.WinnerId != 0) // Если победитель определился ТОЛЬКО ЧТО
             {
-                NotifiedWinner = _game.WinnerId; // Устанавливаем для UI, если есть биндинг на сообщение
+                NotifiedWinner = _game.WinnerId; // Устанавливаем для UI
 
-                if (_game.WinnerId == 1) TotalScoreYellow++;
-                else if (_game.WinnerId == 2) TotalScoreRed++;
+                // ИСПРАВЛЕНИЕ: обновляем счет сразу после определения победителя
+                if (_game.WinnerId == 1)
+                {
+                    TotalScoreYellow++;
+                    System.Diagnostics.Debug.WriteLine($"Yellow wins! Score: {TotalScoreYellow}");
+                }
+                else if (_game.WinnerId == 2)
+                {
+                    TotalScoreRed++;
+                    System.Diagnostics.Debug.WriteLine($"Red wins! Score: {TotalScoreRed}");
+                }
                 // Если WinnerId == 3 (ничья), счет не меняется
 
                 RefreshGameBoardDisplay(true); // Обновить доску с подсветкой выигрыша
@@ -186,6 +212,7 @@ namespace ConnectFour.ViewModel
                 await Task.Delay(3000); // Показываем выигрышную комбинацию
 
                 _game.Reset(); // Сбрасываем доску для следующей игры
+                _mapper.Reset(); // ИСПРАВЛЕНИЕ: сбрасываем также маппер
                 NotifiedWinner = 0;
                 RefreshGameBoardDisplay(); // Обновляем доску (теперь она пустая)
                 SaveCurrentGameData(); // Сохраняем состояние новой игры
@@ -229,12 +256,11 @@ namespace ConnectFour.ViewModel
                 MappedDiscardedArrows = _mapper.ArrowIndicatorControllers.ToArray();
             }
             CurrentTurn = _mapper.CurrentTurn;
-            // ScoreOfPlayer больше не используется, UI должен быть привязан к TotalScoreYellow/Red
-            // NotifyPropertyChanged(nameof(ScoreOfPlayer)); // Удалить или заменить на NotifyPropertyChanged для TotalScoreYellow/Red, если они не вызываются из сеттеров
-            NotifyPropertyChanged(nameof(TotalScoreYellow)); // На всякий случай, если не обновляется через сеттер
+
+            // Принудительно уведомляем об изменении счета
+            NotifyPropertyChanged(nameof(TotalScoreYellow));
             NotifyPropertyChanged(nameof(TotalScoreRed));
         }
-
 
         // Обновляем CanExecute для команд
         private void UpdateCommandStates()

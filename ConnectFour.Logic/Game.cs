@@ -231,8 +231,10 @@ namespace ConnectFour.Logic
                 this.FieldsToCheck = new List<KeyValuePair<int, int>>();
             }
 
-            // Устанавливаем WinnerId и WinningFieldsCoords напрямую
-            this.WinnerId = loadedData.WinnerId;
+            // ИСПРАВЛЕНИЕ: правильно устанавливаем WinnerId через приватное поле, чтобы не триггерить WinnerChanged при загрузке
+            this._winnerId = loadedData.WinnerId;
+            this.WinnerChanged = false; // При загрузке состояния WinnerChanged должен быть false
+
             if (loadedData.WinningFieldsCoords != null && loadedData.WinnerId != 0 && loadedData.WinnerId != 3) // Если есть победитель и координаты
             {
                 this.WinningFieldsCoords = new KeyValuePair<int, int>[loadedData.WinningFieldsCoords.Length];
@@ -245,10 +247,6 @@ namespace ConnectFour.Logic
             {
                 this.WinningFieldsCoords = null;
             }
-
-            // Если WinnerId был установлен, WinnerChanged должен это отразить
-            this.WinnerChanged = (this.WinnerId != 0);
-
 
             if (loadedData.BoardState != null && loadedData.BoardState.Count == GAME_COLUMNS * GAME_ROWS_FOR_EACH_COLUMN)
             {
