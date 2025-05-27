@@ -1,22 +1,30 @@
-﻿using ConnectFour.Logic;
+﻿// ConnectFour/ViewModel/MainWindowViewModel.cs
+using ConnectFour.Logic;
+using ConnectFour.Logic.Models;   // Для UserGameData
+using ConnectFour.Services;  // Для GameDataService
 using System.ComponentModel;
 using System.Threading.Tasks;
 using System.Windows.Input;
+using System.Linq; // Для ToList и других LINQ операций, если понадобятся
 
 namespace ConnectFour.ViewModel
 {
     class MainWindowViewModel : INotifyPropertyChanged
     {
-
         private Game _game = new Game();
         private GameBoardMapper _mapper = new GameBoardMapper();
-        private string[] mappedLocs = new string[42];
-        private int notifiedWinner = 0;
-        private int[] _scoreOfPlayer = new int[2];
+        private string[] mappedLocs = new string[Game.GAME_COLUMNS * Game.GAME_ROWS_FOR_EACH_COLUMN];
+        private int notifiedWinner = 0; // Для отображения победителя в UI, если нужно
 
+        // Общий счет игры
+        private int _totalScoreYellow;
+        private int _totalScoreRed;
 
         private string[] mappedDiscardedArrows = null;
         private string currentTurn;
+
+        private readonly string _username;
+        private readonly GameDataService _gameDataService;
 
         public event PropertyChangedEventHandler PropertyChanged;
 
@@ -27,180 +35,217 @@ namespace ConnectFour.ViewModel
         public ICommand Column5PinAddClick { get; set; }
         public ICommand Column6PinAddClick { get; set; }
         public ICommand Column7PinAddClick { get; set; }
+        public ICommand ResetButtonClick { get; set; } // Кнопка "New Game"
 
-        public ICommand ResetButtonClick { get; set; }
+        // Game и Mapper остаются для внутренней логики
+        // public Game Game { get => _game; set => _game = value; } // Можно сделать приватным, если не нужен снаружи
+        // public GameBoardMapper Mapper { get => _mapper; set => _mapper = value; }
 
-        public Game Game { get => _game; set => _game = value; }
-        public GameBoardMapper Mapper
+        public string[] MappedLocs
         {
-            get => _mapper;
-            set
-            {
-                _mapper = value;
-            }
-        }
-
-        public string[] MappedLocs {
             get => mappedLocs;
-            set
-            {
-                mappedLocs = value;
-                NotifyPropertyChanged("MappedLocs");
-            }
+            set { mappedLocs = value; NotifyPropertyChanged(nameof(MappedLocs)); }
         }
 
-        public string[] MappedDiscardedArrows {
+        public string[] MappedDiscardedArrows
+        {
             get => mappedDiscardedArrows;
-            set
-            {
-                mappedDiscardedArrows = value;
-                NotifyPropertyChanged("MappedDiscardedArrows");
-            }
+            set { mappedDiscardedArrows = value; NotifyPropertyChanged(nameof(MappedDiscardedArrows)); }
         }
 
-        public string CurrentTurn {
+        public string CurrentTurn
+        {
             get => currentTurn;
-            set
-            {
-                currentTurn = value;
-                NotifyPropertyChanged("CurrentTurn");
-            }
+            set { currentTurn = value; NotifyPropertyChanged(nameof(CurrentTurn)); }
         }
 
-        public int NotifiedWinner
+        public int NotifiedWinner // Если используется для отображения сообщения о победителе
         {
             get => notifiedWinner;
-            set
+            set { notifiedWinner = value; NotifyPropertyChanged(nameof(NotifiedWinner)); }
+        }
+
+        public int TotalScoreYellow
+        {
+            get => _totalScoreYellow;
+            set { _totalScoreYellow = value; NotifyPropertyChanged(nameof(TotalScoreYellow)); }
+        }
+
+        public int TotalScoreRed
+        {
+            get => _totalScoreRed;
+            set { _totalScoreRed = value; NotifyPropertyChanged(nameof(TotalScoreRed)); }
+        }
+
+        // Конструктор принимает имя пользователя
+        public MainWindowViewModel(string username)
+        {
+            _username = username;
+            _gameDataService = new GameDataService();
+
+            Column1PinAddClick = new RelayCommand(Column1Click, CanMakeMove);
+            Column2PinAddClick = new RelayCommand(Column2Click, CanMakeMove);
+            Column3PinAddClick = new RelayCommand(Column3Click, CanMakeMove);
+            Column4PinAddClick = new RelayCommand(Column4Click, CanMakeMove);
+            Column5PinAddClick = new RelayCommand(Column5Click, CanMakeMove);
+            Column6PinAddClick = new RelayCommand(Column6Click, CanMakeMove);
+            Column7PinAddClick = new RelayCommand(Column7Click, CanMakeMove);
+            ResetButtonClick = new RelayCommand(ResetGameClick, o => true); // Кнопка "New Game"
+
+            LoadGameOrCreateNew();
+        }
+
+        private bool CanMakeMove(object parameter)
+        {
+            // Можно делать ход, если игра не завершена (нет победителя)
+            return _game.WinnerId == 0;
+        }
+
+
+        private void LoadGameOrCreateNew()
+        {
+            UserGameData loadedData = _gameDataService.LoadGameData(_username);
+            if (loadedData != null)
             {
-                notifiedWinner = value;
-               // MessageBox.Show("The winner is:" + NotifiedWinner);
-                NotifyPropertyChanged("NotifiedWinner");
+                _game.SetStateFromLoad(loadedData);
+                TotalScoreYellow = loadedData.TotalScoreYellow;
+                TotalScoreRed = loadedData.TotalScoreRed;
+                NotifiedWinner = _game.WinnerId; // Если игра была завершена, отобразить это
             }
-        }
-
-        public int[] ScoreOfPlayer
-        {
-            get => _scoreOfPlayer;
-            set
-            {
-                _scoreOfPlayer = value;
-                NotifyPropertyChanged("ScoreOfPlayer");
-            }
-        }
-
-        public MainWindowViewModel()
-        {
-            Column1PinAddClick = new RelayCommand(Column1Click, o => true);
-            Column2PinAddClick = new RelayCommand(Column2Click, o => true);
-            Column3PinAddClick = new RelayCommand(Column3Click, o => true);
-            Column4PinAddClick = new RelayCommand(Column4Click, o => true);
-            Column5PinAddClick = new RelayCommand(Column5Click, o => true);
-            Column6PinAddClick = new RelayCommand(Column6Click, o => true);
-            Column7PinAddClick = new RelayCommand(Column7Click, o => true);
-            ResetButtonClick = new RelayCommand(ResetClick, o => true);
-            mappedLocs = Mapper.FileNameMapper;
-            mappedDiscardedArrows = Mapper.ArrowIndicatorControllers;
-            CurrentTurn = Mapper.CurrentTurn;
-        }
-
-        public void ResetClick(object o)
-        {
-            Game.NewGame();
-            Mapper.Reset();
-            ResetViewModelMappingAfterWin();
-            _scoreOfPlayer = new int[2];
-            NotifyPropertyChanged("ScoreOfPlayer");
-        }
-
-        public void Column1Click(object o)
-        {
-            Game.AddPin(0);
-            UpdateMapping();
-        }
-
-        public void Column2Click(object o)
-        {
-            Game.AddPin(1);
-            UpdateMapping();
-        }
-        public void Column3Click(object o)
-        {
-            Game.AddPin(2);
-            UpdateMapping();
-        }
-        public void Column4Click(object o)
-        {
-            Game.AddPin(3);
-            UpdateMapping();
-        }
-        public void Column5Click(object o)
-        {
-            Game.AddPin(4);
-            UpdateMapping();
-        }
-        public void Column6Click(object o)
-        {
-            Game.AddPin(5);
-            UpdateMapping();
-        }
-        public void Column7Click(object o)
-        {
-            Game.AddPin(6);
-            UpdateMapping();   
-        }
-
-        private async void UpdateMapping()
-        {
-            //On player winning
-            if (Mapper.WinnerChanged(Game))
-            {
-                try
-                {
-                    if (Game.WinnerId != 3)
-                        Mapper.MapToFileNameWin(Game);
-                    else
-                        Mapper.MapToFileName(Game);
-
-                    NotifiedWinner = Game.WinnerId;
-                    Mapper.DiscardFilledColumnIndicators(Game);
-                    Mapper.UpdateTurnIndicator(Game);
-
-                    MappedLocs = Mapper.FileNameMapper;
-                    MappedDiscardedArrows = Mapper.HideArrowIndicators();
-                    CurrentTurn = Mapper.CurrentTurn;
-                    ScoreOfPlayer = Mapper.MapScoreChange(Game);
-
-                    await Task.Delay(3000);
-
-                    Game.Reset();
-                    Mapper.Reset();
-                    ResetViewModelMappingAfterWin();
-
-                    return;
-                }
-                catch (System.Exception ex) { }
-            }
-            //On normal turn
             else
             {
-                Mapper.MapToFileName(Game);
-                Mapper.DiscardFilledColumnIndicators(Game);
-                Mapper.UpdateTurnIndicator(Game);
+                // Нет сохраненных данных, начинаем новую игру и инициализируем счет
+                _game.NewGame(); // NewGame теперь не сбрасывает общий счет
+                TotalScoreYellow = 0;
+                TotalScoreRed = 0;
+                NotifiedWinner = 0;
             }
-
-            MappedLocs = Mapper.FileNameMapper;
-            MappedDiscardedArrows = Mapper.ArrowIndicatorControllers;
-            CurrentTurn = Mapper.CurrentTurn;
+            // Обновляем все отображения в UI
+            RefreshGameBoardDisplay();
+            UpdateCommandStates();
         }
 
-        private void ResetViewModelMappingAfterWin()
+        private void SaveCurrentGameData()
         {
-            MappedLocs = Mapper.FileNameMapper;
-            MappedDiscardedArrows = Mapper.ArrowIndicatorControllers;
-            CurrentTurn = Mapper.CurrentTurn;
-            Mapper.MapToFileName(Game);
-            Mapper.DiscardFilledColumnIndicators(Game);
-            Mapper.UpdateTurnIndicator(Game);
+            UserGameData dataToSave = _game.GetStateForSave();
+            dataToSave.TotalScoreYellow = this.TotalScoreYellow;
+            dataToSave.TotalScoreRed = this.TotalScoreRed;
+            _gameDataService.SaveGameData(_username, dataToSave);
+        }
+
+        // Кнопка "New Game" сбрасывает текущую доску, но не общий счет
+        public void ResetGameClick(object o)
+        {
+            _game.Reset(); // Сбрасывает доску, текущего игрока, но не общий счет
+            NotifiedWinner = 0;
+            RefreshGameBoardDisplay();
+            SaveCurrentGameData(); // Сохраняем состояние (пустая доска, тот же счет)
+            UpdateCommandStates();
+        }
+
+        public void Column1Click(object o) { MakeMove(0); }
+        public void Column2Click(object o) { MakeMove(1); }
+        public void Column3Click(object o) { MakeMove(2); }
+        public void Column4Click(object o) { MakeMove(3); }
+        public void Column5Click(object o) { MakeMove(4); }
+        public void Column6Click(object o) { MakeMove(5); }
+        public void Column7Click(object o) { MakeMove(6); }
+
+        private void MakeMove(int column)
+        {
+            if (_game.WinnerId != 0) return; // Нельзя ходить, если игра окончена
+
+            try
+            {
+                _game.AddPin(column); // Логика игры, включая CheckWinningState
+                ProcessGameUpdate();
+            }
+            catch (System.ArgumentException ex)
+            {
+                // Например, колонка полна
+                System.Windows.MessageBox.Show(ex.Message, "Ошибка хода");
+            }
+        }
+
+        private async void ProcessGameUpdate()
+        {
+            bool gameWasOver = _game.WinnerId != 0; // Запоминаем, была ли игра завершена ДО этого хода
+
+            if (_game.WinnerChanged && !gameWasOver) // Если победитель определился ТОЛЬКО ЧТО
+            {
+                NotifiedWinner = _game.WinnerId; // Устанавливаем для UI, если есть биндинг на сообщение
+
+                if (_game.WinnerId == 1) TotalScoreYellow++;
+                else if (_game.WinnerId == 2) TotalScoreRed++;
+                // Если WinnerId == 3 (ничья), счет не меняется
+
+                RefreshGameBoardDisplay(true); // Обновить доску с подсветкой выигрыша
+                SaveCurrentGameData(); // Сохраняем после определения победителя и обновления счета
+                UpdateCommandStates(); // Обновить доступность кнопок
+
+                await Task.Delay(3000); // Показываем выигрышную комбинацию
+
+                _game.Reset(); // Сбрасываем доску для следующей игры
+                NotifiedWinner = 0;
+                RefreshGameBoardDisplay(); // Обновляем доску (теперь она пустая)
+                SaveCurrentGameData(); // Сохраняем состояние новой игры
+                UpdateCommandStates();
+            }
+            else if (_game.WinnerId == 0) // Игра продолжается
+            {
+                RefreshGameBoardDisplay();
+                SaveCurrentGameData(); // Сохраняем после каждого хода
+                UpdateCommandStates();
+            }
+            else // Игра уже была завершена, просто обновляем отображение (на всякий случай)
+            {
+                RefreshGameBoardDisplay(true); // Показать выигрыш, если он есть
+                UpdateCommandStates();
+            }
+        }
+
+        // Обновляет состояние UI на основе текущего состояния _game
+        private void RefreshGameBoardDisplay(bool highlightWin = false)
+        {
+            if (highlightWin && _game.WinnerId != 0 && _game.WinnerId != 3)
+            {
+                _mapper.MapToFileNameWin(_game); // Отображает выигрышную комбинацию
+            }
+            else
+            {
+                _mapper.MapToFileName(_game); // Обычное отображение
+            }
+            _mapper.DiscardFilledColumnIndicators(_game);
+            _mapper.UpdateTurnIndicator(_game);
+
+            MappedLocs = _mapper.FileNameMapper.ToArray(); // Создаем копию для избежания проблем с привязкой
+
+            if (_game.WinnerId != 0) // Если игра окончена, скрыть все стрелки
+            {
+                MappedDiscardedArrows = _mapper.HideArrowIndicators().ToArray();
+            }
+            else // Иначе, показать/скрыть нужные
+            {
+                MappedDiscardedArrows = _mapper.ArrowIndicatorControllers.ToArray();
+            }
+            CurrentTurn = _mapper.CurrentTurn;
+            // ScoreOfPlayer больше не используется, UI должен быть привязан к TotalScoreYellow/Red
+            // NotifyPropertyChanged(nameof(ScoreOfPlayer)); // Удалить или заменить на NotifyPropertyChanged для TotalScoreYellow/Red, если они не вызываются из сеттеров
+            NotifyPropertyChanged(nameof(TotalScoreYellow)); // На всякий случай, если не обновляется через сеттер
+            NotifyPropertyChanged(nameof(TotalScoreRed));
+        }
+
+
+        // Обновляем CanExecute для команд
+        private void UpdateCommandStates()
+        {
+            (Column1PinAddClick as RelayCommand)?.RaiseCanExecuteChanged();
+            (Column2PinAddClick as RelayCommand)?.RaiseCanExecuteChanged();
+            (Column3PinAddClick as RelayCommand)?.RaiseCanExecuteChanged();
+            (Column4PinAddClick as RelayCommand)?.RaiseCanExecuteChanged();
+            (Column5PinAddClick as RelayCommand)?.RaiseCanExecuteChanged();
+            (Column6PinAddClick as RelayCommand)?.RaiseCanExecuteChanged();
+            (Column7PinAddClick as RelayCommand)?.RaiseCanExecuteChanged();
         }
 
         public void NotifyPropertyChanged(string propertyName)

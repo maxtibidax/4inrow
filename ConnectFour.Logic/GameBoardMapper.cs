@@ -31,13 +31,7 @@ namespace ConnectFour.Logic
             _fileNameMapper = new string[42];
         }
 
-        public int[] MapScoreChange(Game gm)
-        {
-            return new int[2]
-            {
-                gm.Score[0], gm.Score[1]
-            };
-        }
+        
 
         public bool WinnerChanged(Game gm)
         {

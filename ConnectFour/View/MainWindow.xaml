@@ -30,9 +30,7 @@
         <!--#endregion-->
     </Window.Resources>
 
-    <Window.DataContext>
-        <ViewModel:MainWindowViewModel/>
-    </Window.DataContext>
+    
 
     <Grid>
         <!--Board image-->
@@ -154,9 +152,9 @@
         <Label Content="Current player" HorizontalAlignment="Left" Height="28" Margin="18,454,0,0" VerticalAlignment="Top" Width="121" HorizontalContentAlignment="Center" FontFamily="Microsoft YaHei" FontSize="14"/>
 
         <!--Player 1 score-->
-        <Label Content="{Binding ScoreOfPlayer[0]}" HorizontalAlignment="Left" Height="51" Margin="43,202,0,0" VerticalAlignment="Top" Width="72" FontSize="36" HorizontalContentAlignment="Center"/>
+        <Label Content="{Binding TotalScoreYellow}" HorizontalAlignment="Left" Height="51" Margin="43,202,0,0" VerticalAlignment="Top" Width="72" FontSize="36" HorizontalContentAlignment="Center"/>
         <!--Player 2 score-->
-        <Label Content="{Binding ScoreOfPlayer[1]}" HorizontalAlignment="Left" Height="51" Margin="43,321,0,0" VerticalAlignment="Top" Width="72" FontSize="36" HorizontalContentAlignment="Center"/>
+        <Label Content="{Binding TotalScoreRed}" HorizontalAlignment="Left" Height="51" Margin="43,321,0,0" VerticalAlignment="Top" Width="72" FontSize="36" HorizontalContentAlignment="Center"/>
         <Label Content="YELLOW" HorizontalAlignment="Left" Height="35" Margin="29,171,0,0" VerticalAlignment="Top" Width="107" HorizontalContentAlignment="Center" FontFamily="Microsoft YaHei UI" VerticalContentAlignment="Center" FontSize="24"/>
         <Label Content="RED" HorizontalAlignment="Left" Height="35" Margin="26,291,0,0" VerticalAlignment="Top" Width="107" HorizontalContentAlignment="Center" FontFamily="Microsoft YaHei UI" VerticalContentAlignment="Center" FontSize="24"/>
 

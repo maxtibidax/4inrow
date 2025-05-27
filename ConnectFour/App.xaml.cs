@@ -1,4 +1,5 @@
-﻿using System;
+﻿// ConnectFour/App.xaml.cs
+using System;
 using System.Collections.Generic;
 using System.Configuration;
 using System.Data;
@@ -6,7 +7,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using System.Windows;
 using ConnectFour.View;
-using ConnectFour.ViewModel;
+using ConnectFour.ViewModel; // Для AuthViewModel и MainWindowViewModel
 
 namespace ConnectFour
 {
@@ -19,10 +20,11 @@ namespace ConnectFour
         {
             base.OnStartup(e);
 
-            // Создаем окно аутентификации
+            // Убедись, что StartupUri не задан в App.xaml
+
             AuthWindow authWindow = new AuthWindow();
 
-            // Получаем ViewModel
+            // Получаем или создаем AuthViewModel
             AuthViewModel authViewModel = authWindow.DataContext as AuthViewModel;
             if (authViewModel == null)
             {
@@ -30,20 +32,30 @@ namespace ConnectFour
                 authWindow.DataContext = authViewModel;
             }
 
-            // Флаг для отслеживания успешного входа
             bool loginSuccessful = false;
+            string loggedInUsername = null; // Для хранения имени пользователя
             MainWindow mainWindow = null;
 
             // Подписываемся на событие успешного входа
+            // args в лямбде теперь будет типа LoginSuccessEventArgs
             authViewModel.LoginSuccess += (sender, args) =>
             {
                 loginSuccessful = true;
+                loggedInUsername = args.Username; // Получаем имя пользователя из аргументов события
 
-                // Создаем главное окно в том же потоке
+                // Создаем главное окно и его ViewModel в UI потоке
                 Application.Current.Dispatcher.Invoke(() =>
                 {
-                    mainWindow = new MainWindow();
-                    // Закрываем окно аутентификации
+                    // Сначала создаем ViewModel, передавая ему имя пользователя
+                    var mainVM = new MainWindowViewModel(loggedInUsername);
+
+                    // Затем создаем MainWindow и устанавливаем его DataContext
+                    mainWindow = new MainWindow
+                    {
+                        DataContext = mainVM
+                    };
+
+                    // Закрываем окно аутентификации с положительным результатом
                     authWindow.DialogResult = true;
                 });
             };
@@ -51,15 +63,16 @@ namespace ConnectFour
             // Показываем окно аутентификации как модальное
             bool? dialogResult = authWindow.ShowDialog();
 
-            // Проверяем результат
-            if (dialogResult == true && loginSuccessful && mainWindow != null)
+            // Проверяем результат аутентификации
+            if (dialogResult == true && loginSuccessful && mainWindow != null && !string.IsNullOrEmpty(loggedInUsername))
             {
-                // Показываем главное окно
+                // Если вход успешен и главное окно создано, показываем его
                 mainWindow.Show();
             }
             else
             {
-                // Если аутентификация не удалась, завершаем приложение
+                // Если аутентификация не удалась или пользователь закрыл окно,
+                // завершаем приложение
                 Current.Shutdown();
             }
         }

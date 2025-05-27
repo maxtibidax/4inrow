@@ -7,6 +7,15 @@ using System.Windows.Controls;
 
 namespace ConnectFour.ViewModel
 {
+    // В конце файла AuthViewModel.cs или в отдельном файле
+    public class LoginSuccessEventArgs : System.EventArgs
+    {
+        public string Username { get; }
+        public LoginSuccessEventArgs(string username)
+        {
+            Username = username;
+        }
+    }
     public class AuthViewModel : INotifyPropertyChanged
     {
         private UserService _userService;
@@ -29,7 +38,7 @@ namespace ConnectFour.ViewModel
         public RelayCommand RegisterCommand { get; private set; }
 
         // Событие для сигнализации об успешном входе
-        public event System.EventHandler LoginSuccess;
+        public event System.EventHandler<LoginSuccessEventArgs> LoginSuccess;
 
         public AuthViewModel()
         {
@@ -68,7 +77,7 @@ namespace ConnectFour.ViewModel
                         // Вызываем событие в UI потоке
                         Application.Current.Dispatcher.Invoke(() =>
                         {
-                            LoginSuccess?.Invoke(this, System.EventArgs.Empty);
+                            LoginSuccess?.Invoke(this, new LoginSuccessEventArgs(this.Username));
                         });
                     });
                 }

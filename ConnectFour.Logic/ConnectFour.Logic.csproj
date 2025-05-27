@@ -44,7 +44,9 @@
   <ItemGroup>
     <Compile Include="Game.cs" />
     <Compile Include="GameBoardMapper.cs" />
+    <Compile Include="Models\UserGameData.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
+  <ItemGroup />
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>
