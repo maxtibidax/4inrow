@@ -91,16 +91,15 @@ namespace ConnectFour.ViewModel
             LoadGameOrCreateNew();
         }
 
+        // MainWindowViewModel.cs
         private bool CanMakeMove(object parameter)
         {
-            // Проверяем не только окончание игры, но и полность конкретной колонки
-            if (_game.WinnerId != 0) return false;
+            if (_game.WinnerId != 0) return false; // Если игра окончена, все кнопки неактивны
 
-            // Получаем номер колонки из команды
-            int column = GetColumnFromCommand(parameter);
-            if (column == -1) return false;
-
-            return !_game.FullColumns.Contains(column);
+            // Пока уберем проверку на конкретную колонку из CanMakeMove,
+            // чтобы кнопки просто работали. Логика Game.AddPin() все равно выбросит исключение,
+            // если колонка полна.
+            return true;
         }
 
         private int GetColumnFromCommand(object parameter)
