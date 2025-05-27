@@ -2,8 +2,8 @@
 using ConnectFour.Services;
 using System.ComponentModel;
 using System.Runtime.CompilerServices;
-using System.Windows; // Для MessageBox и Window
-using System.Windows.Controls; // Для PasswordBox
+using System.Windows;
+using System.Windows.Controls;
 
 namespace ConnectFour.ViewModel
 {
@@ -31,7 +31,6 @@ namespace ConnectFour.ViewModel
         // Событие для сигнализации об успешном входе
         public event System.EventHandler LoginSuccess;
 
-
         public AuthViewModel()
         {
             _userService = new UserService();
@@ -41,50 +40,85 @@ namespace ConnectFour.ViewModel
 
         private bool CanLoginOrRegister(object parameter)
         {
-            // Простая проверка, можно усложнить
-            return !string.IsNullOrWhiteSpace(Username) && (parameter as PasswordBox)?.Password.Length > 0;
+            var passwordBox = parameter as PasswordBox;
+            return !string.IsNullOrWhiteSpace(Username) &&
+                   passwordBox != null &&
+                   !string.IsNullOrWhiteSpace(passwordBox.Password);
         }
 
         private void Login(object parameter)
         {
             var passwordBox = parameter as PasswordBox;
-            if (passwordBox == null) return;
-
-            var user = _userService.AuthenticateUser(Username, passwordBox.Password);
-            if (user != null)
+            if (passwordBox == null)
             {
-                Message = "Вход успешен!";
-                // Сигнализируем, что логин успешен
-                LoginSuccess?.Invoke(this, System.EventArgs.Empty);
+                Message = "Ошибка при получении пароля.";
+                return;
             }
-            else
+
+            try
             {
-                Message = "Неверный логин или пароль.";
+                var user = _userService.AuthenticateUser(Username, passwordBox.Password);
+                if (user != null)
+                {
+                    Message = "Вход успешен!";
+
+                    // Небольшая задержка для отображения сообщения
+                    System.Threading.Tasks.Task.Delay(500).ContinueWith(t =>
+                    {
+                        // Вызываем событие в UI потоке
+                        Application.Current.Dispatcher.Invoke(() =>
+                        {
+                            LoginSuccess?.Invoke(this, System.EventArgs.Empty);
+                        });
+                    });
+                }
+                else
+                {
+                    Message = "Неверный логин или пароль.";
+                }
+            }
+            catch (System.Exception ex)
+            {
+                Message = $"Ошибка при входе: {ex.Message}";
             }
         }
 
         private void Register(object parameter)
         {
             var passwordBox = parameter as PasswordBox;
-            if (passwordBox == null) return;
-
-            if (_userService.RegisterUser(Username, passwordBox.Password))
+            if (passwordBox == null)
             {
-                Message = "Регистрация успешна! Теперь можете войти.";
+                Message = "Ошибка при получении пароля.";
+                return;
             }
-            else
+
+            try
             {
-                Message = "Ошибка регистрации. Возможно, пользователь уже существует или данные некорректны.";
+                if (_userService.RegisterUser(Username, passwordBox.Password))
+                {
+                    Message = "Регистрация успешна! Теперь можете войти.";
+                    // Очищаем поля после успешной регистрации
+                    passwordBox.Clear();
+                }
+                else
+                {
+                    Message = "Ошибка регистрации. Возможно, пользователь уже существует или данные некорректны.";
+                }
+            }
+            catch (System.Exception ex)
+            {
+                Message = $"Ошибка при регистрации: {ex.Message}";
             }
         }
 
         public event PropertyChangedEventHandler PropertyChanged;
+
         protected virtual void OnPropertyChanged([CallerMemberName] string propertyName = null)
         {
             PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
-            // Обновляем состояние команд при изменении свойств, от которых они зависят
-            LoginCommand.RaiseCanExecuteChanged();
-            RegisterCommand.RaiseCanExecuteChanged();
+            // Обновляем состояние команд при изменении свойств
+            LoginCommand?.RaiseCanExecuteChanged();
+            RegisterCommand?.RaiseCanExecuteChanged();
         }
     }
 }
