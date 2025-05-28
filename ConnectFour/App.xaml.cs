@@ -1,80 +1,80 @@
 ﻿// ConnectFour/App.xaml.cs
-using System;
-using System.Collections.Generic;
-using System.Configuration;
-using System.Data;
-using System.Linq;
-using System.Threading.Tasks;
-using System.Windows;
 using ConnectFour.View;
-using ConnectFour.ViewModel; // Для AuthViewModel и MainWindowViewModel
+using ConnectFour.ViewModel;
+using System.Windows;
 
 namespace ConnectFour
 {
-    /// <summary>
-    /// Logika interakcji dla klasy App.xaml
-    /// </summary>
     public partial class App : Application
     {
         protected override void OnStartup(StartupEventArgs e)
         {
             base.OnStartup(e);
+            ShutdownMode = ShutdownMode.OnExplicitShutdown; // Важно, чтобы приложение не закрывалось при закрытии последнего окна, если мы управляем этим циклом
 
-            // Убедись, что StartupUri не задан в App.xaml
-
-            AuthWindow authWindow = new AuthWindow();
-
-            // Получаем или создаем AuthViewModel
-            AuthViewModel authViewModel = authWindow.DataContext as AuthViewModel;
-            if (authViewModel == null)
+            bool keepRunning = true;
+            while (keepRunning)
             {
-                authViewModel = new AuthViewModel();
-                authWindow.DataContext = authViewModel;
-            }
+                keepRunning = false; // По умолчанию, если не будет успешного логина или выхода для повтора
 
-            bool loginSuccessful = false;
-            string loggedInUsername = null; // Для хранения имени пользователя
-            MainWindow mainWindow = null;
-
-            // Подписываемся на событие успешного входа
-            // args в лямбде теперь будет типа LoginSuccessEventArgs
-            authViewModel.LoginSuccess += (sender, args) =>
-            {
-                loginSuccessful = true;
-                loggedInUsername = args.Username; // Получаем имя пользователя из аргументов события
-
-                // Создаем главное окно и его ViewModel в UI потоке
-                Application.Current.Dispatcher.Invoke(() =>
+                AuthWindow authWindow = new AuthWindow();
+                AuthViewModel authViewModel = authWindow.DataContext as AuthViewModel;
+                if (authViewModel == null)
                 {
-                    // Сначала создаем ViewModel, передавая ему имя пользователя
-                    var mainVM = new MainWindowViewModel(loggedInUsername);
+                    authViewModel = new AuthViewModel();
+                    authWindow.DataContext = authViewModel;
+                }
 
-                    // Затем создаем MainWindow и устанавливаем его DataContext
+                bool loginSuccessful = false;
+                string loggedInUsername = null;
+                MainWindow mainWindow = null;
+
+                authViewModel.LoginSuccess += (sender, args) =>
+                {
+                    loginSuccessful = true;
+                    loggedInUsername = args.Username;
+                    authWindow.DialogResult = true; // Закрываем AuthWindow с успехом
+                };
+
+                bool? authDialogResult = authWindow.ShowDialog();
+
+                if (authDialogResult == true && loginSuccessful && !string.IsNullOrEmpty(loggedInUsername))
+                {
+                    // Успешный вход
+                    var mainVM = new MainWindowViewModel(loggedInUsername);
                     mainWindow = new MainWindow
                     {
                         DataContext = mainVM
                     };
 
-                    // Закрываем окно аутентификации с положительным результатом
-                    authWindow.DialogResult = true;
-                });
-            };
+                    // Подписываемся на событие выхода из MainWindowViewModel
+                    mainVM.UserLoggedOut += (s, a) =>
+                    {
+                        keepRunning = true; // Сигнализируем, что нужно снова показать AuthWindow
+                        mainWindow.Close(); // Закрываем MainWindow
+                    };
 
-            // Показываем окно аутентификации как модальное
-            bool? dialogResult = authWindow.ShowDialog();
+                    // Устанавливаем MainWindow как главное окно для текущей сессии
+                    // Это нужно, чтобы приложение не завершилось, если пользователь закроет AuthWindow крестиком в следующий раз
+                    // Однако, это может быть сложно, если мы хотим гибко переключаться.
+                    // Проще всего управлять ShutdownMode.OnExplicitShutdown и вызывать Current.Shutdown() когда нужно.
+                    // Current.MainWindow = mainWindow; // Это можно сделать, но нужно аккуратно управлять
 
-            // Проверяем результат аутентификации
-            if (dialogResult == true && loginSuccessful && mainWindow != null && !string.IsNullOrEmpty(loggedInUsername))
-            {
-                // Если вход успешен и главное окно создано, показываем его
-                mainWindow.Show();
+                    mainWindow.ShowDialog(); // Показываем MainWindow как модальное или немодальное
+
+                    // Если mainWindow был закрыт (не через Logout, а, например, крестиком),
+                    // то keepRunning останется false, и цикл завершится (приложение закроется).
+                    // Если был Logout, keepRunning станет true, и цикл начнется снова.
+                }
+                else
+                {
+                    // Аутентификация не удалась (пользователь закрыл AuthWindow или нажал отмену)
+                    // keepRunning остается false, приложение завершится после выхода из цикла.
+                }
             }
-            else
-            {
-                // Если аутентификация не удалась или пользователь закрыл окно,
-                // завершаем приложение
-                Current.Shutdown();
-            }
+
+            // Если вышли из цикла while, значит, пора завершать приложение
+            Current.Shutdown();
         }
     }
 }

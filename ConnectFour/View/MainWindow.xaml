@@ -36,59 +36,84 @@
         <!--Board image-->
 
         <Button Content="New Game" Command="{Binding ResetButtonClick}" HorizontalAlignment="Left" Height="39" Margin="17,22,0,0" VerticalAlignment="Top" Width="122"/>
+        <Button Content="Выход из профиля" Command="{Binding LogoutCommand}"
+            HorizontalAlignment="Left" Height="39" Margin="17,66,0,0" VerticalAlignment="Top" Width="122"/>
         <Image HorizontalAlignment="Left" Source="/Resources/bTex.jpg" Height="462" Margin="186,92,-73,0" VerticalAlignment="Top" Width="631"/>
 
         <Image HorizontalAlignment="Left" Source="/Resources/c4boardNew.png" Height="502" Margin="161,66,0,0" VerticalAlignment="Top" Width="580"/>
 
         <!--#region Buttons named from left to right 1 ... 7 -->
-        <Button Visibility="{Binding MappedDiscardedArrows[0]}" Name="b1" Command="{Binding Column1PinAddClick}" Style="{DynamicResource NoMouseOverButton}"
-                HorizontalAlignment="Left" Height="57.333" Margin="185.671,3.667,0,0" VerticalAlignment="Top" Width="56.168" BorderThickness="0" BorderBrush="{x:Null}" Foreground="{x:Null}">
+        <!--#region Buttons named from left to right 1 ... 7 -->
+        <Button Visibility="{Binding MappedDiscardedArrows[0]}" Name="b1"
+        Command="{Binding Column1PinAddClick}" CommandParameter="0"
+        Style="{DynamicResource NoMouseOverButton}"
+        HorizontalAlignment="Left" Height="57.333" Margin="185.671,3.667,0,0" VerticalAlignment="Top" Width="56.168"
+        BorderThickness="0" BorderBrush="{x:Null}" Foreground="{x:Null}">
             <Button.Background>
                 <ImageBrush ImageSource="/ConnectFour;component/Resources/arrow.png"/>
             </Button.Background>
         </Button>
 
-        <Button Visibility="{Binding MappedDiscardedArrows[1]}" Name="b2" Command="{Binding Column2PinAddClick}" Style="{DynamicResource NoMouseOverButton}"
-            HorizontalAlignment="Left" Height="57.333" Margin="264.337,3.667,0,0" VerticalAlignment="Top" Width="56.168" BorderThickness="0" BorderBrush="{x:Null}" Foreground="{x:Null}">
+        <Button Visibility="{Binding MappedDiscardedArrows[1]}" Name="b2"
+        Command="{Binding Column2PinAddClick}" CommandParameter="1"
+        Style="{DynamicResource NoMouseOverButton}"
+        HorizontalAlignment="Left" Height="57.333" Margin="264.337,3.667,0,0" VerticalAlignment="Top" Width="56.168"
+        BorderThickness="0" BorderBrush="{x:Null}" Foreground="{x:Null}">
             <Button.Background>
                 <ImageBrush ImageSource="/ConnectFour;component/Resources/arrow.png"/>
             </Button.Background>
         </Button>
 
-        <Button Visibility="{Binding MappedDiscardedArrows[2]}" Name="b3" Command="{Binding Column3PinAddClick}" Style="{DynamicResource NoMouseOverButton}"
-            HorizontalAlignment="Left" Height="57.333" Margin="343.004,3.667,0,0" VerticalAlignment="Top" Width="56.168" BorderThickness="0" BorderBrush="{x:Null}" Foreground="{x:Null}">
+        <Button Visibility="{Binding MappedDiscardedArrows[2]}" Name="b3"
+        Command="{Binding Column3PinAddClick}" CommandParameter="2"
+        Style="{DynamicResource NoMouseOverButton}"
+        HorizontalAlignment="Left" Height="57.333" Margin="343.004,3.667,0,0" VerticalAlignment="Top" Width="56.168"
+        BorderThickness="0" BorderBrush="{x:Null}" Foreground="{x:Null}">
             <Button.Background>
                 <ImageBrush ImageSource="/ConnectFour;component/Resources/arrow.png"/>
             </Button.Background>
         </Button>
 
-        <Button Visibility="{Binding MappedDiscardedArrows[3]}" Name="b4" Command="{Binding Column4PinAddClick}" Style="{DynamicResource NoMouseOverButton}"
-            HorizontalAlignment="Left" Height="57.333" Margin="423.004,3.667,0,0" VerticalAlignment="Top" Width="56.168" BorderThickness="0" BorderBrush="{x:Null}" Foreground="{x:Null}">
+        <Button Visibility="{Binding MappedDiscardedArrows[3]}" Name="b4"
+        Command="{Binding Column4PinAddClick}" CommandParameter="3"
+        Style="{DynamicResource NoMouseOverButton}"
+        HorizontalAlignment="Left" Height="57.333" Margin="423.004,3.667,0,0" VerticalAlignment="Top" Width="56.168"
+        BorderThickness="0" BorderBrush="{x:Null}" Foreground="{x:Null}">
             <Button.Background>
                 <ImageBrush ImageSource="/ConnectFour;component/Resources/arrow.png"/>
             </Button.Background>
         </Button>
 
-        <Button Visibility="{Binding MappedDiscardedArrows[4]}" Name="b5" Command="{Binding Column5PinAddClick}" Style="{DynamicResource NoMouseOverButton}"
-            HorizontalAlignment="Left" Height="57.333" Margin="501.671,3.667,0,0" VerticalAlignment="Top" Width="56.168" BorderThickness="0" BorderBrush="{x:Null}" Foreground="{x:Null}">
+        <Button Visibility="{Binding MappedDiscardedArrows[4]}" Name="b5"
+        Command="{Binding Column5PinAddClick}" CommandParameter="4"
+        Style="{DynamicResource NoMouseOverButton}"
+        HorizontalAlignment="Left" Height="57.333" Margin="501.671,3.667,0,0" VerticalAlignment="Top" Width="56.168"
+        BorderThickness="0" BorderBrush="{x:Null}" Foreground="{x:Null}">
             <Button.Background>
                 <ImageBrush ImageSource="/ConnectFour;component/Resources/arrow.png"/>
             </Button.Background>
         </Button>
 
-        <Button Visibility="{Binding MappedDiscardedArrows[5]}" Name="b6" Command="{Binding Column6PinAddClick}" Style="{DynamicResource NoMouseOverButton}"
-            HorizontalAlignment="Left" Height="57.333" Margin="581.004,3.667,0,0" VerticalAlignment="Top" Width="56.168" BorderThickness="0" BorderBrush="{x:Null}" Foreground="{x:Null}">
+        <Button Visibility="{Binding MappedDiscardedArrows[5]}" Name="b6"
+        Command="{Binding Column6PinAddClick}" CommandParameter="5"
+        Style="{DynamicResource NoMouseOverButton}"
+        HorizontalAlignment="Left" Height="57.333" Margin="581.004,3.667,0,0" VerticalAlignment="Top" Width="56.168"
+        BorderThickness="0" BorderBrush="{x:Null}" Foreground="{x:Null}">
             <Button.Background>
                 <ImageBrush ImageSource="/ConnectFour;component/Resources/arrow.png"/>
             </Button.Background>
         </Button>
 
-        <Button Visibility="{Binding MappedDiscardedArrows[6]}" Name="b7" Command="{Binding Column7PinAddClick}" Style="{DynamicResource NoMouseOverButton}"
-            HorizontalAlignment="Left" Height="57.333" Margin="660.337,3.667,0,0" VerticalAlignment="Top" Width="56.168" BorderThickness="0" BorderBrush="{x:Null}" Foreground="{x:Null}">
+        <Button Visibility="{Binding MappedDiscardedArrows[6]}" Name="b7"
+        Command="{Binding Column7PinAddClick}" CommandParameter="6"
+        Style="{DynamicResource NoMouseOverButton}"
+        HorizontalAlignment="Left" Height="57.333" Margin="660.337,3.667,0,0" VerticalAlignment="Top" Width="56.168"
+        BorderThickness="0" BorderBrush="{x:Null}" Foreground="{x:Null}">
             <Button.Background>
                 <ImageBrush ImageSource="/ConnectFour;component/Resources/arrow.png"/>
             </Button.Background>
         </Button>
+        <!--#endregion-->
         <!--#endregion-->
 
         <Image HorizontalAlignment="Left" Source="{Binding CurrentTurn}" Height="55" Margin="50,487,0,0" VerticalAlignment="Top" Width="56" Stretch="Fill"/>

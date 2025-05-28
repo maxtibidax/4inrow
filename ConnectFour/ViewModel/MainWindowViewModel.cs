@@ -6,7 +6,7 @@ using System.ComponentModel;
 using System.Threading.Tasks;
 using System.Windows.Input;
 using System.Linq; // Для ToList и других LINQ операций, если понадобятся
-
+using System;
 namespace ConnectFour.ViewModel
 {
     class MainWindowViewModel : INotifyPropertyChanged
@@ -36,6 +36,10 @@ namespace ConnectFour.ViewModel
         public ICommand Column6PinAddClick { get; set; }
         public ICommand Column7PinAddClick { get; set; }
         public ICommand ResetButtonClick { get; set; } // Кнопка "New Game"
+        public ICommand LogoutCommand { get; private set; }
+
+        // Событие для сигнализации о выходе пользователя
+        public event EventHandler UserLoggedOut;
 
         public string[] MappedLocs
         {
@@ -87,19 +91,55 @@ namespace ConnectFour.ViewModel
             Column6PinAddClick = new RelayCommand(Column6Click, CanMakeMove);
             Column7PinAddClick = new RelayCommand(Column7Click, CanMakeMove);
             ResetButtonClick = new RelayCommand(ResetGameClick, o => true); // Кнопка "New Game"
-
+            LogoutCommand = new RelayCommand(ExecuteLogout, CanLogout);
             LoadGameOrCreateNew();
         }
+        private bool CanLogout(object parameter)
+        {
+            return true; // Всегда можно выйти
+        }
+        private void ExecuteLogout(object parameter)
+        {
+            // Сначала можно сохранить текущее состояние игры, если это еще не сделано
+            // (хотя SaveCurrentGameData() вызывается после каждого хода и при завершении)
+            // SaveCurrentGameData(); // Раскомментируй, если считаешь нужным дополнительное сохранение перед выходом
 
+            // Вызываем событие, чтобы App.xaml.cs мог на него отреагировать
+            UserLoggedOut?.Invoke(this, EventArgs.Empty);
+        }
         // MainWindowViewModel.cs
         private bool CanMakeMove(object parameter)
         {
-            if (_game.WinnerId != 0) return false; // Если игра окончена, все кнопки неактивны
+            if (_game.WinnerId != 0)
+            {
+                return false; // Игра окончена, нельзя ходить
+            }
 
-            // Пока уберем проверку на конкретную колонку из CanMakeMove,
-            // чтобы кнопки просто работали. Логика Game.AddPin() все равно выбросит исключение,
-            // если колонка полна.
-            return true;
+            if (parameter == null)
+            {
+                // Этого не должно происходить для команд колонок, если CommandParameter задан.
+                // Если это какая-то другая команда, использующая этот же CanExecute, то можно вернуть true.
+                // Для кнопок колонок, если параметр не пришел, это ошибка.
+                // Для отладки можно вернуть true, чтобы кнопки были активны.
+                System.Diagnostics.Debug.WriteLine("CanMakeMove: parameter is null!");
+                return true; // Временно для отладки, если кнопки неактивны
+            }
+
+            if (int.TryParse(parameter.ToString(), out int columnNumber))
+            {
+                // Проверяем, что номер колонки в допустимых пределах (на всякий случай)
+                if (columnNumber < 0 || columnNumber >= Game.GAME_COLUMNS)
+                {
+                    System.Diagnostics.Debug.WriteLine($"CanMakeMove: Invalid column number {columnNumber}");
+                    return false;
+                }
+                return !_game.FullColumns.Contains(columnNumber);
+            }
+            else
+            {
+                System.Diagnostics.Debug.WriteLine($"CanMakeMove: Failed to parse parameter '{parameter}' to int.");
+                return false; // Не смогли распознать параметр как номер колонки
+            }
         }
 
         private int GetColumnFromCommand(object parameter)
