@@ -27,13 +27,22 @@ namespace ConnectFour.Services
             try
             {
                 string json = File.ReadAllText(_filePath);
+                // Добавим проверку на пустой или некорректный JSON
+                if (string.IsNullOrWhiteSpace(json)) return new List<User>();
                 return JsonSerializer.Deserialize<List<User>>(json) ?? new List<User>();
             }
             catch
             {
-                // В случае ошибки чтения или десериализации, возвращаем пустой список
                 return new List<User>();
             }
+        }
+        public List<User> GetAllUsers()
+        {
+            // Возвращаем копию списка, чтобы внешний код не мог изменить оригинальный список _users
+            // Или, если _users всегда актуален (перезагружается при необходимости), можно и так:
+            return _users != null ? new List<User>(_users) : new List<User>();
+            // Учитывая, что _users загружается в конструкторе, он не должен быть null.
+            // return new List<User>(_users); // Можно и так, если _users всегда инициализирован
         }
 
         private void SaveUsers()

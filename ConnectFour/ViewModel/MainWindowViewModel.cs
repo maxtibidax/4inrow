@@ -7,6 +7,10 @@ using System.Threading.Tasks;
 using System.Windows.Input;
 using System.Linq; // Для ToList и других LINQ операций, если понадобятся
 using System;
+using System.IO;
+using System.Text;
+using System.Collections.Generic; // Для List<User>
+using ConnectFour.Models;
 namespace ConnectFour.ViewModel
 {
     class MainWindowViewModel : INotifyPropertyChanged
@@ -25,6 +29,8 @@ namespace ConnectFour.ViewModel
 
         private readonly string _username;
         private readonly GameDataService _gameDataService;
+        private readonly UserService _userService; // Добавим экземпляр UserService
+        public ICommand GenerateReportCommand { get; private set; }
 
         public event PropertyChangedEventHandler PropertyChanged;
 
@@ -82,6 +88,7 @@ namespace ConnectFour.ViewModel
         {
             _username = username;
             _gameDataService = new GameDataService();
+            _userService = new UserService(); // Инициализируем UserService
 
             Column1PinAddClick = new RelayCommand(Column1Click, CanMakeMove);
             Column2PinAddClick = new RelayCommand(Column2Click, CanMakeMove);
@@ -92,7 +99,132 @@ namespace ConnectFour.ViewModel
             Column7PinAddClick = new RelayCommand(Column7Click, CanMakeMove);
             ResetButtonClick = new RelayCommand(ResetGameClick, o => true); // Кнопка "New Game"
             LogoutCommand = new RelayCommand(ExecuteLogout, CanLogout);
+            GenerateReportCommand = new RelayCommand(ExecuteGenerateReport, CanGenerateReport);
+
             LoadGameOrCreateNew();
+        }
+        private bool CanGenerateReport(object parameter)
+        {
+            return true; // Отчет всегда можно сгенерировать
+        }
+
+        private void ExecuteGenerateReport(object parameter)
+        {
+            try
+            {
+                // 1. Получаем всех пользователей
+                // Нам нужен метод в UserService, который вернет всех пользователей.
+                // Если его нет, придется добавить. Предположим, он есть или мы его добавим.
+                List<User> allUsers = _userService.GetAllUsers(); // Предполагаемое имя метода
+
+                if (allUsers == null || !allUsers.Any())
+                {
+                    System.Windows.MessageBox.Show("Нет зарегистрированных пользователей для создания отчета.", "Информация", System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Information);
+                    return;
+                }
+
+                StringBuilder htmlBuilder = new StringBuilder();
+
+                // Заголовок HTML
+                htmlBuilder.AppendLine("<!DOCTYPE html>");
+                htmlBuilder.AppendLine("<html lang=\"ru\">");
+                htmlBuilder.AppendLine("<head>");
+                htmlBuilder.AppendLine("    <meta charset=\"UTF-F-8\">");
+                htmlBuilder.AppendLine("    <meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\">");
+                htmlBuilder.AppendLine("    <title>Отчет по игре ConnectFour</title>");
+                htmlBuilder.AppendLine("    <style>");
+                htmlBuilder.AppendLine("        body { font-family: Arial, sans-serif; margin: 20px; background-color: #f4f4f4; color: #333; }");
+                htmlBuilder.AppendLine("        h1 { color: #333; text-align: center; }");
+                htmlBuilder.AppendLine("        table { width: 80%; margin: 20px auto; border-collapse: collapse; box-shadow: 0 0 10px rgba(0,0,0,0.1); background-color: #fff; }");
+                htmlBuilder.AppendLine("        th, td { padding: 12px 15px; text-align: left; border-bottom: 1px solid #ddd; }");
+                htmlBuilder.AppendLine("        th { background-color: #007bff; color: white; }");
+                htmlBuilder.AppendLine("        tr:nth-child(even) { background-color: #f2f2f2; }");
+                htmlBuilder.AppendLine("        tr:hover { background-color: #e9e9e9; }");
+                htmlBuilder.AppendLine("    </style>");
+                htmlBuilder.AppendLine("</head>");
+                htmlBuilder.AppendLine("<body>");
+                htmlBuilder.AppendLine("    <h1>Отчет по игре ConnectFour</h1>");
+                htmlBuilder.AppendLine("    <table>");
+                htmlBuilder.AppendLine("        <thead>");
+                htmlBuilder.AppendLine("            <tr>");
+                htmlBuilder.AppendLine("                <th>Пользователь</th>");
+                htmlBuilder.AppendLine("                <th>Побед Желтых</th>");
+                htmlBuilder.AppendLine("                <th>Побед Красных</th>");
+                htmlBuilder.AppendLine("                <th>Всего игр сыграно (победы)</th>");
+                htmlBuilder.AppendLine("            </tr>");
+                htmlBuilder.AppendLine("        </thead>");
+                htmlBuilder.AppendLine("        <tbody>");
+
+                int grandTotalYellowWins = 0;
+                int grandTotalRedWins = 0;
+                int grandTotalGamesPlayed = 0;
+
+                foreach (var user in allUsers)
+                {
+                    UserGameData gameData = _gameDataService.LoadGameData(user.Username);
+                    int userYellowWins = 0;
+                    int userRedWins = 0;
+                    int userGamesPlayed = 0;
+
+                    if (gameData != null)
+                    {
+                        userYellowWins = gameData.TotalScoreYellow;
+                        userRedWins = gameData.TotalScoreRed;
+                        userGamesPlayed = userYellowWins + userRedWins; // Считаем игры по общему количеству побед
+
+                        grandTotalYellowWins += userYellowWins;
+                        grandTotalRedWins += userRedWins;
+                        grandTotalGamesPlayed += userGamesPlayed;
+                    }
+
+                    htmlBuilder.AppendLine("            <tr>");
+                    htmlBuilder.AppendLine($"                <td>{System.Security.SecurityElement.Escape(user.Username)}</td>"); // Экранируем имя пользователя
+                    htmlBuilder.AppendLine($"                <td>{userYellowWins}</td>");
+                    htmlBuilder.AppendLine($"                <td>{userRedWins}</td>");
+                    htmlBuilder.AppendLine($"                <td>{userGamesPlayed}</td>");
+                    htmlBuilder.AppendLine("            </tr>");
+                }
+
+                htmlBuilder.AppendLine("        </tbody>");
+                // Строка с общими итогами
+                htmlBuilder.AppendLine("        <tfoot>");
+                htmlBuilder.AppendLine("            <tr style=\"font-weight: bold; background-color: #dcdcdc;\">");
+                htmlBuilder.AppendLine("                <td>Общий итог:</td>");
+                htmlBuilder.AppendLine($"                <td>{grandTotalYellowWins}</td>");
+                htmlBuilder.AppendLine($"                <td>{grandTotalRedWins}</td>");
+                htmlBuilder.AppendLine($"                <td>{grandTotalGamesPlayed}</td>");
+                htmlBuilder.AppendLine("            </tr>");
+                htmlBuilder.AppendLine("        </tfoot>");
+                htmlBuilder.AppendLine("    </table>");
+                htmlBuilder.AppendLine("</body>");
+                htmlBuilder.AppendLine("</html>");
+
+                // 3. Сохраняем HTML в файл
+                string reportFilePath = "ConnectFour_Report.html"; // Файл будет в папке с exe
+                File.WriteAllText(reportFilePath, htmlBuilder.ToString());
+
+                System.Windows.MessageBox.Show($"Отчет успешно создан и сохранен в файле:\n{Path.GetFullPath(reportFilePath)}", "Отчет создан", System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Information);
+
+                // (Опционально) Попытка открыть файл в браузере по умолчанию
+                try
+                {
+                    // Используем Process.Start с UseShellExecute = true для открытия файла ассоциированным приложением
+                    var processStartInfo = new System.Diagnostics.ProcessStartInfo(Path.GetFullPath(reportFilePath))
+                    {
+                        UseShellExecute = true
+                    };
+                    System.Diagnostics.Process.Start(processStartInfo);
+                }
+                catch (Exception ex)
+                {
+                    System.Diagnostics.Debug.WriteLine($"Не удалось открыть отчет: {ex.Message}");
+                    // Можно показать сообщение пользователю, что файл не удалось открыть автоматически
+                }
+            }
+            catch (Exception ex)
+            {
+                System.Windows.MessageBox.Show($"Ошибка при создании отчета: {ex.Message}", "Ошибка", System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Error);
+            }
         }
         private bool CanLogout(object parameter)
         {

@@ -5,23 +5,272 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:localVM="clr-namespace:ConnectFour.ViewModel"
         mc:Ignorable="d"
-        Title="Аутентификация" Height="250" Width="300"
-        WindowStartupLocation="CenterScreen">
+        Title="4 В РЯД - Авторизация" Height="450" Width="416"
+        WindowStartupLocation="CenterScreen"
+        ResizeMode="NoResize"
+        WindowStyle="None"
+        AllowsTransparency="True"
+        Background="Transparent"
+        KeyDown="Window_KeyDown"
+        Loaded="Window_Loaded">
+
     <Window.DataContext>
         <localVM:AuthViewModel/>
     </Window.DataContext>
-    <StackPanel Margin="15">
-        <TextBlock Text="Логин:" />
-        <TextBox Text="{Binding Username, UpdateSourceTrigger=PropertyChanged}" Margin="0,0,0,10"/>
 
-        <TextBlock Text="Пароль:" />
-        <!-- PasswordBox не поддерживает прямое связывание с Password свойством из соображений безопасности -->
-        <!-- Мы будем передавать его через CommandParameter или использовать хелпер -->
-        <PasswordBox Name="PasswordBoxAuth" Margin="0,0,0,10"/>
+    <Window.Resources>
+        <Style x:Key="GameButtonStyle" TargetType="Button">
+            <Setter Property="Background">
+                <Setter.Value>
+                    <LinearGradientBrush StartPoint="0,0" EndPoint="0,1">
+                        <GradientStop Color="#4A90E2" Offset="0"/>
+                        <GradientStop Color="#357ABD" Offset="1"/>
+                    </LinearGradientBrush>
+                </Setter.Value>
+            </Setter>
+            <Setter Property="Foreground" Value="White"/>
+            <Setter Property="FontSize" Value="16"/>
+            <Setter Property="FontWeight" Value="Bold"/>
+            <Setter Property="Height" Value="45"/>
+            <Setter Property="Margin" Value="0,8"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border Background="{TemplateBinding Background}" 
+                                CornerRadius="8"
+                                BorderThickness="2"
+                                BorderBrush="#2C5F7F">
+                            <ContentPresenter HorizontalAlignment="Center" 
+                                              VerticalAlignment="Center"/>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter Property="Background">
+                                    <Setter.Value>
+                                        <LinearGradientBrush StartPoint="0,0" EndPoint="0,1">
+                                            <GradientStop Color="#5BA0F2" Offset="0"/>
+                                            <GradientStop Color="#4A8ACD" Offset="1"/>
+                                        </LinearGradientBrush>
+                                    </Setter.Value>
+                                </Setter>
+                            </Trigger>
+                            <Trigger Property="IsPressed" Value="True">
+                                <Setter Property="Background">
+                                    <Setter.Value>
+                                        <LinearGradientBrush StartPoint="0,0" EndPoint="0,1">
+                                            <GradientStop Color="#357ABD" Offset="0"/>
+                                            <GradientStop Color="#2C6BA5" Offset="1"/>
+                                        </LinearGradientBrush>
+                                    </Setter.Value>
+                                </Setter>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
 
-        <Button Content="Войти" Command="{Binding LoginCommand}" CommandParameter="{Binding ElementName=PasswordBoxAuth}" Margin="0,5"/>
-        <Button Content="Зарегистрироваться" Command="{Binding RegisterCommand}" CommandParameter="{Binding ElementName=PasswordBoxAuth}" Margin="0,5"/>
+        <Style x:Key="GameTextBoxStyle" TargetType="TextBox">
+            <Setter Property="Background" Value="#3A4A5C"/>
+            <Setter Property="Foreground" Value="White"/>
+            <Setter Property="FontSize" Value="14"/>
+            <Setter Property="Height" Value="40"/>
+            <Setter Property="Padding" Value="12,8"/>
+            <Setter Property="BorderThickness" Value="2"/>
+            <Setter Property="BorderBrush" Value="#4A5A6C"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="TextBox">
+                        <Border Background="{TemplateBinding Background}"
+                                BorderBrush="{TemplateBinding BorderBrush}"
+                                BorderThickness="{TemplateBinding BorderThickness}"
+                                CornerRadius="6">
+                            <ScrollViewer x:Name="PART_ContentHost" 
+                                          Padding="{TemplateBinding Padding}"
+                                          VerticalAlignment="Center"/>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsFocused" Value="True">
+                                <Setter Property="BorderBrush" Value="#FFD700"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
 
-        <TextBlock Text="{Binding Message}" Foreground="Red" TextWrapping="Wrap" Margin="0,10,0,0"/>
-    </StackPanel>
+        <Style x:Key="GamePasswordBoxStyle" TargetType="PasswordBox">
+            <Setter Property="Background" Value="#3A4A5C"/>
+            <Setter Property="Foreground" Value="White"/>
+            <Setter Property="FontSize" Value="14"/>
+            <Setter Property="Height" Value="40"/>
+            <Setter Property="Padding" Value="12,8"/>
+            <Setter Property="BorderThickness" Value="2"/>
+            <Setter Property="BorderBrush" Value="#4A5A6C"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="PasswordBox">
+                        <Border Background="{TemplateBinding Background}"
+                                BorderBrush="{TemplateBinding BorderBrush}"
+                                BorderThickness="{TemplateBinding BorderThickness}"
+                                CornerRadius="6">
+                            <ScrollViewer x:Name="PART_ContentHost" 
+                                          Padding="{TemplateBinding Padding}"
+                                          VerticalAlignment="Center"/>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsFocused" Value="True">
+                                <Setter Property="BorderBrush" Value="#FFD700"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <Style x:Key="CloseButtonStyle" TargetType="Button">
+            <Setter Property="Background" Value="#E74C3C"/>
+            <Setter Property="Foreground" Value="White"/>
+            <Setter Property="FontSize" Value="16"/>
+            <Setter Property="FontWeight" Value="Bold"/>
+            <Setter Property="Width" Value="30"/>
+            <Setter Property="Height" Value="30"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border Background="{TemplateBinding Background}" 
+                                CornerRadius="15">
+                            <ContentPresenter HorizontalAlignment="Center" 
+                                              VerticalAlignment="Center"/>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter Property="Background" Value="#C0392B"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <DropShadowEffect x:Key="TextGlowEffect" 
+                          Color="#FFD700" 
+                          Direction="0" 
+                          ShadowDepth="0" 
+                          BlurRadius="10"/>
+    </Window.Resources>
+
+    <Border CornerRadius="15" BorderThickness="3">
+        <Border.Background>
+            <LinearGradientBrush StartPoint="0,0" EndPoint="1,1">
+                <GradientStop Color="#2C3E50" Offset="0"/>
+                <GradientStop Color="#34495E" Offset="0.5"/>
+                <GradientStop Color="#2C3E50" Offset="1"/>
+            </LinearGradientBrush>
+        </Border.Background>
+        <Border.BorderBrush>
+            <LinearGradientBrush StartPoint="0,0" EndPoint="1,1">
+                <GradientStop Color="#FFD700" Offset="0"/>
+                <GradientStop Color="#FFA500" Offset="0.5"/>
+                <GradientStop Color="#FF6347" Offset="1"/>
+            </LinearGradientBrush>
+        </Border.BorderBrush>
+
+        <Grid Margin="0,0,-3,-48">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="60"/>
+                <RowDefinition Height="*"/>
+            </Grid.RowDefinitions>
+
+            <Grid Grid.Row="0" MouseLeftButtonDown="TitleBar_MouseLeftButtonDown" Margin="15,-5,11,9">
+
+                <TextBlock Text="4 В РЯД" 
+                           FontSize="24" 
+                           FontWeight="Bold" 
+                           Foreground="#FFD700"
+                           HorizontalAlignment="Center" 
+                           VerticalAlignment="Center"
+                           Effect="{StaticResource TextGlowEffect}" RenderTransformOrigin="0.49,0.331"/>
+
+                <Button Content="X" 
+                        Style="{StaticResource CloseButtonStyle}"
+                        HorizontalAlignment="Left" 
+                        VerticalAlignment="Center"
+                        Margin="356,0,0,0"
+                        Click="CloseButton_Click" Background="#FFBB1402" RenderTransformOrigin="0.54,0.497"/>
+            </Grid>
+
+            <StackPanel Grid.Row="1" Margin="40,30,40,40">
+                <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" Margin="0,0,0,30">
+                    <Ellipse Width="40" Height="40" Margin="0,0,20,0">
+                        <Ellipse.Fill>
+                            <RadialGradientBrush>
+                                <GradientStop Color="#FFD700" Offset="0"/>
+                                <GradientStop Color="#FFA500" Offset="1"/>
+                            </RadialGradientBrush>
+                        </Ellipse.Fill>
+                    </Ellipse>
+                    <TextBlock Text="VS" FontSize="18" FontWeight="Bold" 
+                               Foreground="White" VerticalAlignment="Center" Margin="0,0,20,0"/>
+                    <Ellipse Width="40" Height="40">
+                        <Ellipse.Fill>
+                            <RadialGradientBrush>
+                                <GradientStop Color="#E74C3C" Offset="0"/>
+                                <GradientStop Color="#C0392B" Offset="1"/>
+                            </RadialGradientBrush>
+                        </Ellipse.Fill>
+                    </Ellipse>
+                </StackPanel>
+
+                <TextBlock Text="ЛОГИН" 
+                           FontSize="14" 
+                           FontWeight="Bold"
+                           Foreground="#BDC3C7" 
+                           Margin="0,0,0,5"/>
+                <TextBox x:Name="UsernameTextBox" Text="{Binding Username, UpdateSourceTrigger=PropertyChanged}" 
+                         Style="{StaticResource GameTextBoxStyle}"
+                         KeyDown="InputField_KeyDown"
+                         Margin="0,0,0,15"/>
+
+                <TextBlock Text="ПАРОЛЬ" 
+                           FontSize="14" 
+                           FontWeight="Bold"
+                           Foreground="#BDC3C7"
+                           Margin="0,0,0,5"/>
+                <PasswordBox Name="PasswordBoxAuth" 
+                             Style="{StaticResource GamePasswordBoxStyle}"
+                             KeyDown="InputField_KeyDown"
+                             Margin="0,0,0,20"/>
+
+                <Button x:Name="LoginButton" Content="ВОЙТИ" 
+                        Command="{Binding LoginCommand}" 
+                        CommandParameter="{Binding ElementName=PasswordBoxAuth}" 
+                        Style="{StaticResource GameButtonStyle}"/>
+
+                <Button Content="РЕГИСТРАЦИЯ" 
+                        Command="{Binding RegisterCommand}" 
+                        CommandParameter="{Binding ElementName=PasswordBoxAuth}" 
+                        Style="{StaticResource GameButtonStyle}">
+                    <Button.Background>
+                        <LinearGradientBrush StartPoint="0,0" EndPoint="0,1">
+                            <GradientStop Color="#27AE60" Offset="0"/>
+                            <GradientStop Color="#229954" Offset="1"/>
+                        </LinearGradientBrush>
+                    </Button.Background>
+                </Button>
+
+                <TextBlock Text="{Binding Message}" 
+                           Foreground="#E74C3C" 
+                           FontWeight="Bold"
+                           TextWrapping="Wrap" 
+                           HorizontalAlignment="Center"
+                           Margin="0,15,0,0"
+                           FontSize="13"/>
+            </StackPanel>
+        </Grid>
+    </Border>
 </Window>

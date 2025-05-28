@@ -98,6 +98,7 @@
       <DependentUpon>App.xaml</DependentUpon>
       <SubType>Code</SubType>
     </Compile>
+    <Compile Include="Converters\StringToVisibilityConverter.cs" />
     <Compile Include="Helpers\PasswordHelper.cs" />
     <Compile Include="Models\User.cs" />
     <Compile Include="RelayCommand.cs" />
